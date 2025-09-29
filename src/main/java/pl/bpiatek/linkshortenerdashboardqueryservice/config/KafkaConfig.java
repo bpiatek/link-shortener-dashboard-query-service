@@ -36,7 +36,7 @@ class KafkaConfig {
     @Bean
     ConsumerFactory<String, LinkClickEnrichedEvent> linkEnrichedClickEventConsumerFactory() {
         Map<String, Object> props = baseConsumerProperties();
-        props.put(KafkaProtobufDeserializerConfig.SPECIFIC_PROTOBUF_VALUE_TYPE, LinkClickEvent.class);
+        props.put(KafkaProtobufDeserializerConfig.SPECIFIC_PROTOBUF_VALUE_TYPE, LinkClickEnrichedEvent.class);
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
