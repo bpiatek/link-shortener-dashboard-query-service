@@ -7,12 +7,17 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
+import pl.bpiatek.contracts.analytics.AnalyticsEventProto;
+import pl.bpiatek.contracts.analytics.AnalyticsEventProto.LinkClickEnrichedEvent;
 import pl.bpiatek.contracts.link.LinkClickEventProto.LinkClickEvent;
+import pl.bpiatek.contracts.link.LinkLifecycleEventProto;
+import pl.bpiatek.contracts.link.LinkLifecycleEventProto.LinkLifecycleEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,17 +34,37 @@ class KafkaConfig {
     }
 
     @Bean
-    ConsumerFactory<String, LinkClickEvent> linkClickEventConsumerFactory() {
+    ConsumerFactory<String, LinkClickEnrichedEvent> linkEnrichedClickEventConsumerFactory() {
         Map<String, Object> props = baseConsumerProperties();
         props.put(KafkaProtobufDeserializerConfig.SPECIFIC_PROTOBUF_VALUE_TYPE, LinkClickEvent.class);
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
     @Bean
-    ConcurrentKafkaListenerContainerFactory<String, LinkClickEvent> linkClickEventContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, LinkClickEvent> factory =
+    ConcurrentKafkaListenerContainerFactory<String, LinkClickEnrichedEvent> linkEnrichedClickEventContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, LinkClickEnrichedEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(linkClickEventConsumerFactory());
+        factory.setConsumerFactory(linkEnrichedClickEventConsumerFactory());
+        factory.getContainerProperties()
+                .setListenerTaskExecutor(new ConcurrentTaskExecutor(
+                        Executors.newThreadPerTaskExecutor(Thread.ofVirtual().factory())
+                ));
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, LinkLifecycleEvent> linkLifecycleEventConsumerFactory() {
+        Map<String, Object> props = kafkaProperties.buildConsumerProperties(null);
+        props.put(KafkaProtobufDeserializerConfig.SPECIFIC_PROTOBUF_VALUE_TYPE, LinkLifecycleEvent.class);
+        return new DefaultKafkaConsumerFactory<>(props);
+    }
+
+    @Bean
+    @Primary
+    public ConcurrentKafkaListenerContainerFactory<String, LinkLifecycleEvent> linkLifecycleEventsContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, LinkLifecycleEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(linkLifecycleEventConsumerFactory());
         factory.getContainerProperties()
                 .setListenerTaskExecutor(new ConcurrentTaskExecutor(
                         Executors.newThreadPerTaskExecutor(Thread.ofVirtual().factory())
