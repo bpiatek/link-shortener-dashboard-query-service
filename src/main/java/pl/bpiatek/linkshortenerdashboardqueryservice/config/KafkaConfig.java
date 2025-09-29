@@ -54,7 +54,7 @@ class KafkaConfig {
 
     @Bean
     public ConsumerFactory<String, LinkLifecycleEvent> linkLifecycleEventConsumerFactory() {
-        Map<String, Object> props = kafkaProperties.buildConsumerProperties(null);
+        Map<String, Object> props = baseConsumerProperties();
         props.put(KafkaProtobufDeserializerConfig.SPECIFIC_PROTOBUF_VALUE_TYPE, LinkLifecycleEvent.class);
         return new DefaultKafkaConsumerFactory<>(props);
     }
