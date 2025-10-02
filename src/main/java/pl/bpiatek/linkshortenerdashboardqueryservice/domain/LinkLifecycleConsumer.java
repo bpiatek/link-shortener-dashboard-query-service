@@ -48,7 +48,7 @@ class LinkLifecycleConsumer {
                 linkCreated.getUserId(),
                 linkCreated.getShortUrl(),
                 linkCreated.getLongUrl(),
-                null,
+                linkCreated.getTitle(),
                 linkCreated.getIsActive(),
                 convertProtoToInstant(linkCreated.getCreatedAt()),
                 convertProtoToInstant(linkCreated.getCreatedAt()),

@@ -53,7 +53,7 @@ class KafkaConfig {
     }
 
     @Bean
-    public ConsumerFactory<String, LinkLifecycleEvent> linkLifecycleEventConsumerFactory() {
+    ConsumerFactory<String, LinkLifecycleEvent> linkLifecycleEventConsumerFactory() {
         Map<String, Object> props = baseConsumerProperties();
         props.put(KafkaProtobufDeserializerConfig.SPECIFIC_PROTOBUF_VALUE_TYPE, LinkLifecycleEvent.class);
         return new DefaultKafkaConsumerFactory<>(props);
@@ -61,7 +61,7 @@ class KafkaConfig {
 
     @Bean
     @Primary
-    public ConcurrentKafkaListenerContainerFactory<String, LinkLifecycleEvent> linkLifecycleEventsContainerFactory() {
+    ConcurrentKafkaListenerContainerFactory<String, LinkLifecycleEvent> linkLifecycleEventsContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, LinkLifecycleEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(linkLifecycleEventConsumerFactory());

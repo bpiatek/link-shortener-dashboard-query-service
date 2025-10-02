@@ -25,7 +25,7 @@ class JdbcDashboardLinkRepository implements DashboardLinkRepository {
             VALUES (:linkId, :userId, :shortUrl, :longUrl, :title, :isActive, :createdAt, :updatedAt)
             ON CONFLICT (link_id) DO NOTHING
             """;
-        namedJdbcTemplate.update(sql, toSqlParams(link));
+        namedJdbcTemplate.update(sql, toSqlInsertParams(link));
     }
 
     @Override
@@ -38,7 +38,15 @@ class JdbcDashboardLinkRepository implements DashboardLinkRepository {
                 updated_at = :updatedAt
             WHERE link_id = :linkId
             """;
-        namedJdbcTemplate.update(sql, toSqlParams(link));
+
+        var params = new MapSqlParameterSource()
+                .addValue("linkId", link.linkId())
+                .addValue("longUrl", link.longUrl())
+                .addValue("title", link.title())
+                .addValue("isActive", link.isActive())
+                .addValue("updatedAt", Timestamp.from(link.updatedAt()));
+
+        namedJdbcTemplate.update(sql, params);
     }
 
     @Override
@@ -83,7 +91,7 @@ class JdbcDashboardLinkRepository implements DashboardLinkRepository {
         namedJdbcTemplate.update(sql, params);
     }
 
-    private MapSqlParameterSource toSqlParams(DashboardLink link) {
+    private MapSqlParameterSource toSqlInsertParams(DashboardLink link) {
         return new MapSqlParameterSource()
                 .addValue("linkId", link.linkId())
                 .addValue("userId", link.userId())
