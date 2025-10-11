@@ -8,6 +8,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -15,6 +17,7 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static pl.bpiatek.linkshortenerdashboardqueryservice.domain.TestDashboardLink.builder;
 
 @JdbcTest
 @Import({JdbcDashboardLinkRepository.class, DashboardLinkFixtures.class})
@@ -77,7 +80,7 @@ class JdbcDashboardLinkRepositoryTest implements WithPostgres {
     @Test
     void shouldUpdateDashboardLink() {
         // given
-        var dashboardLink = fixtures.aDashboardLink(TestDashboardLink.builder()
+        var dashboardLink = fixtures.aDashboardLink(builder()
                 .title("test title")
                 .isActive(true)
                 .updatedAt(Instant.parse("2025-09-01T10:00:00Z"))
@@ -202,6 +205,136 @@ class JdbcDashboardLinkRepositoryTest implements WithPostgres {
             s.assertThat(fromDb.getClicksByOs().get("IOS")).isEqualTo(1L);
 
             s.assertThat(fromDb.getTotalClicks()).isEqualTo(2L);
+        });
+    }
+
+    @Test
+    void shouldFindLinksByUserId() {
+        // given
+        var userId1 = "user-1";
+        var userId2 = "user-2";
+        var link = fixtures.aDashboardLink(builder()
+                .userId(userId1)
+                .linkId("link-1")
+                .shortUrl("test-short-url")
+                .build());
+        fixtures.aDashboardLink(builder()
+                .userId(userId2)
+                .build());
+        var pageable = PageRequest.of(0, 10);
+
+        // when
+        var page = repository.findByUserId(userId1, pageable);
+
+        // then
+        assertSoftly(s -> {
+            s.assertThat(page.getTotalElements()).isOne();
+            s.assertThat(page.getTotalPages()).isOne();
+            s.assertThat(page.getContent().size()).isOne();
+
+            var dashboardLink = page.getContent().getFirst();
+            s.assertThat(dashboardLink.linkId()).isEqualTo(link.getLinkId());
+            s.assertThat(dashboardLink.userId()).isEqualTo(link.getUserId());
+            s.assertThat(dashboardLink.shortUrl()).isEqualTo(link.getShortUrl());
+            s.assertThat(dashboardLink.longUrl()).isEqualTo(link.getLongUrl());
+            s.assertThat(dashboardLink.isActive()).isEqualTo(link.isActive());
+            s.assertThat(dashboardLink.createdAt()).isEqualTo(link.getCreatedAt());
+            s.assertThat(dashboardLink.updatedAt()).isEqualTo(link.getUpdatedAt());
+        });
+    }
+
+    @Test
+    void shouldFindLinksByUserIdSortedByShortUrlDescending() {
+        // given
+        var userId1 = "user-1";
+        var zLink = fixtures.aDashboardLink(builder()
+                .userId(userId1)
+                .linkId("link-1")
+                .shortUrl("z-short-url")
+                .build());
+
+        var aLink = fixtures.aDashboardLink(builder()
+                .userId(userId1)
+                .linkId("link-2")
+                .shortUrl("a-short-url")
+                .build());
+
+        var pageable = PageRequest.of(0, 10, Sort.by("short_url").ascending());
+
+        // when
+        var page = repository.findByUserId(userId1, pageable);
+
+        // then
+        assertSoftly(s -> {
+            s.assertThat(page.getTotalElements()).isEqualTo(2);
+            s.assertThat(page.getTotalPages()).isOne();
+            s.assertThat(page.getContent().size()).isEqualTo(2);
+
+            var dashboardLink1 = page.getContent().getFirst();
+            s.assertThat(dashboardLink1.linkId()).isEqualTo(aLink.getLinkId());
+            s.assertThat(dashboardLink1.shortUrl()).isEqualTo(aLink.getShortUrl());
+
+
+            var dashboardLink2 = page.getContent().get(1);
+            s.assertThat(dashboardLink2.linkId()).isEqualTo(zLink.getLinkId());
+            s.assertThat(dashboardLink2.shortUrl()).isEqualTo(zLink.getShortUrl());
+        });
+    }
+
+    @Test
+    void shouldFallBackToDefaultSortForInvalidSortPropertyOnFindByUserId() {
+        // given
+        // default is created_at desc
+        var userId1 = "user-1";
+        var earlierLink = fixtures.aDashboardLink(builder()
+                .userId(userId1)
+                .linkId("link-1")
+                .shortUrl("z-short-url")
+                .createdAt(Instant.parse("2024-08-22T10:00:00Z"))
+                .build());
+
+        var laterLink = fixtures.aDashboardLink(builder()
+                .userId(userId1)
+                .linkId("link-2")
+                .shortUrl("a-short-url")
+                .createdAt(Instant.parse("2025-08-22T10:00:00Z"))
+                .build());
+
+        var pageable = PageRequest.of(0, 10, Sort.by("invalid_prop").ascending());
+
+        // when
+        var page = repository.findByUserId(userId1, pageable);
+
+        // then
+        assertSoftly(s -> {
+            s.assertThat(page.getTotalElements()).isEqualTo(2);
+            s.assertThat(page.getTotalPages()).isOne();
+            s.assertThat(page.getContent().size()).isEqualTo(2);
+
+            var dashboardLink1 = page.getContent().getFirst();
+            s.assertThat(dashboardLink1.linkId()).isEqualTo(laterLink.getLinkId());
+
+            var dashboardLink2 = page.getContent().get(1);
+            s.assertThat(dashboardLink2.linkId()).isEqualTo(earlierLink.getLinkId());
+
+        });
+    }
+
+    @Test
+    void shouldReturnEmptyPageForUserWithNoLinks() {
+        // given
+        var userIdWithNoLinks = "user-no-links";
+        fixtures.aDashboardLink(builder().userId("another-user").build());
+        var pageable = PageRequest.of(0, 10);
+
+        // when
+        var page = repository.findByUserId(userIdWithNoLinks, pageable);
+
+        // then
+        assertSoftly(s -> {
+            s.assertThat(page).isNotNull();
+            s.assertThat(page.isEmpty()).isTrue();
+            s.assertThat(page.getTotalElements()).isZero();
         });
     }
 

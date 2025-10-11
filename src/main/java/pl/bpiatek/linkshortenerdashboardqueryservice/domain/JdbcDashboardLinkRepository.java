@@ -17,7 +17,7 @@ class JdbcDashboardLinkRepository implements DashboardLinkRepository {
 
     private final NamedParameterJdbcTemplate namedJdbcTemplate;
     private final DashboardLinkRowMapper rowMapper = new DashboardLinkRowMapper();
-    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of("createdAt", "totalClicks", "title", "shortUrl");
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of("created_at", "total_clicks", "title", "short_url");
 
     JdbcDashboardLinkRepository(JdbcTemplate jdbcTemplate) {
         this.namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
