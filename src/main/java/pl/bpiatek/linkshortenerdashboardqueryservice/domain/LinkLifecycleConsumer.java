@@ -4,7 +4,6 @@ import com.google.protobuf.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Component;
 import pl.bpiatek.contracts.link.LinkLifecycleEventProto;
 import pl.bpiatek.contracts.link.LinkLifecycleEventProto.LinkCreated;
 import pl.bpiatek.contracts.link.LinkLifecycleEventProto.LinkDeleted;
@@ -12,7 +11,6 @@ import pl.bpiatek.contracts.link.LinkLifecycleEventProto.LinkUpdated;
 
 import java.time.Instant;
 
-@Component
 class LinkLifecycleConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(LinkLifecycleConsumer.class);

@@ -3,10 +3,8 @@ package pl.bpiatek.linkshortenerdashboardqueryservice.domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Component;
 import pl.bpiatek.contracts.analytics.AnalyticsEventProto;
 
-@Component
 class EnrichedClickConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(EnrichedClickConsumer.class);

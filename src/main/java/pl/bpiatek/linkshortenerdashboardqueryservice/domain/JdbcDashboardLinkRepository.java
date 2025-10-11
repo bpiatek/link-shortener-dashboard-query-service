@@ -1,17 +1,23 @@
 package pl.bpiatek.linkshortenerdashboardqueryservice.domain;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-@Repository
 class JdbcDashboardLinkRepository implements DashboardLinkRepository {
 
     private final NamedParameterJdbcTemplate namedJdbcTemplate;
+    private final DashboardLinkRowMapper rowMapper = new DashboardLinkRowMapper();
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of("createdAt", "totalClicks", "title", "shortUrl");
 
     JdbcDashboardLinkRepository(JdbcTemplate jdbcTemplate) {
         this.namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
@@ -89,6 +95,56 @@ class JdbcDashboardLinkRepository implements DashboardLinkRepository {
                 .addValue("osName", osName);
 
         namedJdbcTemplate.update(sql, params);
+    }
+
+    @Override
+    public Page<DashboardLink> findByUserId(String userId, Pageable pageable) {
+        long total = countByUserId(userId);
+        if (total == 0) {
+            return Page.empty(pageable);
+        }
+
+        var selectSql = new StringBuilder("""
+        SELECT
+        dl.id, dl.link_id, dl.user_id, dl.short_url, dl.long_url,
+        dl.title, dl.is_active, dl.created_at, dl.updated_at, dl.total_clicks
+        FROM dashboard_links dl WHERE user_id = :userId""")
+        .append(createOrderByClause(pageable.getSort()))
+        .append(" LIMIT :limit OFFSET :offset");
+
+        var selectParams = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("limit", pageable.getPageSize())
+                .addValue("offset", pageable.getOffset());
+
+        var content = namedJdbcTemplate.query(selectSql.toString(), selectParams, rowMapper);
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    private String createOrderByClause(Sort sort) {
+        if (sort.isUnsorted()) {
+            return " ORDER BY created_at DESC";
+        }
+
+        var orderBy = sort.stream()
+                .filter(order -> ALLOWED_SORT_COLUMNS.contains(order.getProperty()))
+                .map(order -> order.getProperty() + " " + order.getDirection())
+                .collect(Collectors.joining(", "));
+
+        if (orderBy.isBlank()) {
+            return " ORDER BY created_at DESC";
+        }
+
+        return " ORDER BY " + orderBy;
+    }
+
+
+    private long countByUserId(String userId) {
+        var sql = "SELECT COUNT(*) FROM dashboard_links WHERE user_id = :userId";
+        var total = namedJdbcTemplate.queryForObject(sql, Map.of("userId", userId), Long.class);
+
+        return total == null ? 0 : total;
     }
 
     private MapSqlParameterSource toSqlInsertParams(DashboardLink link) {
