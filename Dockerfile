@@ -35,15 +35,22 @@ RUN --mount=type=secret,id=maven-settings,target=/root/.m2/settings.xml \
 
 
 # ===================================================================================
-# STAGE 2: Final Image
-# This stage creates the final, minimal image for production.
+# Stage 2: Runtime (minimal JRE via jlink)
 # ===================================================================================
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:21-jdk-jammy AS jre-builder
+RUN $JAVA_HOME/bin/jlink \
+    --add-modules java.base,java.logging,java.sql \
+    --strip-debug --no-man-pages --no-header-files --compress=2 \
+    --output /javaruntime \
 
+# ===================================================================================
+# Stage 3: Final Image
+# ===================================================================================
+FROM ubuntu:22.04
 WORKDIR /app
 
-# Copy only the final application JAR from the builder stage.
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=jre-builder /javaruntime /opt/java
+ENV PATH="/opt/java/bin:$PATH"
 
-# Set the entrypoint to run the application.
+COPY --from=builder /app/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]

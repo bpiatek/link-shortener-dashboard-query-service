@@ -22,7 +22,7 @@ class DashboardLinkFixtures {
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final SimpleJdbcInsert linkInsert;
-    private final ObjectMapper objectMapper; // For parsing JSONB
+    private final ObjectMapper objectMapper;
 
     DashboardLinkFixtures(NamedParameterJdbcTemplate namedParameterJdbcTemplate, ObjectMapper objectMapper) {
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
