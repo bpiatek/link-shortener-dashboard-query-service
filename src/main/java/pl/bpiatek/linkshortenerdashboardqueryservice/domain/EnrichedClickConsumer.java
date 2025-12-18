@@ -3,7 +3,7 @@ package pl.bpiatek.linkshortenerdashboardqueryservice.domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
-import pl.bpiatek.contracts.analytics.AnalyticsEventProto;
+import pl.bpiatek.contracts.analytics.AnalyticsEventProto.LinkClickEnrichedEvent;
 
 class EnrichedClickConsumer {
 
@@ -19,13 +19,21 @@ class EnrichedClickConsumer {
             groupId = "${spring.kafka.consumer.group-id}",
             containerFactory = "linkEnrichedClickEventContainerFactory"
     )
-    void consume(AnalyticsEventProto.LinkClickEnrichedEvent event) {
+    void consume(LinkClickEnrichedEvent event) {
         log.info("Received EnrichedClickEvent for link_id '{}'. Incrementing counters.", event.getLinkId());
         repository.incrementClickCounters(
                 event.getLinkId(),
                 event.getCountryCode(),
                 event.getDeviceType(),
                 event.getOsName()
+        );
+
+        repository.incrementCityClicks(
+                event.getLinkId(),
+                event.getCountryCode(),
+                event.getCityName(),
+                event.getCityLatitude(),
+                event.getCityLongitude()
         );
     }
 }

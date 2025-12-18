@@ -171,6 +171,30 @@ class JdbcDashboardLinkRepository implements DashboardLinkRepository {
         return result.stream().findFirst();
     }
 
+    @Override
+    public void incrementCityClicks(String linkId, String countryCode, String cityName, String latitude, String longitude) {
+        var sql = """
+        INSERT INTO dashboard_link_city_stats (
+            link_id, country_code, city_name, latitude, longitude, clicks
+        )
+        VALUES (
+            :linkId, :countryCode, :cityName, :latitude, :longitude, 1
+        )
+        ON CONFLICT (link_id, country_code, city_name)
+        DO UPDATE SET clicks = dashboard_link_city_stats.clicks + 1
+        """;
+
+        var params = new MapSqlParameterSource()
+                .addValue("linkId", linkId)
+                .addValue("countryCode", countryCode)
+                .addValue("cityName", cityName)
+                .addValue("latitude", latitude)
+                .addValue("longitude", longitude);
+
+        namedJdbcTemplate.update(sql, params);
+    }
+
+
     private String createOrderByClause(Sort sort) {
         if (sort.isUnsorted()) {
             return " ORDER BY created_at DESC";

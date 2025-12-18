@@ -12,4 +12,5 @@ interface DashboardLinkRepository {
     void incrementClickCounters(String linkId, String countryCode, String deviceType, String osName);
     Page<DashboardLink> findByUserId(String userId, Pageable pageable);
     Optional<DashboardLinkDetails> getByLinkIdAndUser(String userId, String linkId);
+    void incrementCityClicks(String linkId, String countryCode, String cityName, String latitude, String longitude);
 }
