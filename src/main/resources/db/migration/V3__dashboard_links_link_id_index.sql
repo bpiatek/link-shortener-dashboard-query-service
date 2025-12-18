@@ -1,0 +1,1 @@
+CREATE INDEX idx_dashboard_links_on_link_id ON dashboard_links (link_id);

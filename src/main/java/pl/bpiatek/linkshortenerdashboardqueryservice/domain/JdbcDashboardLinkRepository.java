@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.sql.Timestamp;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -120,6 +121,54 @@ class JdbcDashboardLinkRepository implements DashboardLinkRepository {
         var content = namedJdbcTemplate.query(selectSql.toString(), selectParams, rowMapper);
 
         return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public Optional<DashboardLinkDetails> getByLinkIdAndUser(String userId, String linkId) {
+
+        var sql = """
+        SELECT
+            dl.id,
+            dl.link_id,
+            dl.user_id,
+            dl.short_url,
+            dl.long_url,
+            dl.title,
+            dl.is_active,
+            dl.created_at,
+            dl.updated_at,
+            dl.total_clicks,
+            dl.clicks_by_country,
+            dl.clicks_by_device,
+            dl.clicks_by_os
+        FROM dashboard_links dl
+        WHERE dl.user_id = :userId
+          AND dl.link_id = :linkId
+        """;
+
+        var params = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("linkId", linkId);
+
+        var result = namedJdbcTemplate.query(sql, params, (rs, rowNum) ->
+                new DashboardLinkDetails(
+                        rs.getLong("id"),
+                        rs.getString("link_id"),
+                        rs.getString("user_id"),
+                        rs.getString("short_url"),
+                        rs.getString("long_url"),
+                        rs.getString("title"),
+                        rs.getBoolean("is_active"),
+                        rs.getTimestamp("created_at").toInstant(),
+                        rs.getTimestamp("updated_at").toInstant(),
+                        rs.getLong("total_clicks"),
+                        rs.getString("clicks_by_country"),
+                        rs.getString("clicks_by_device"),
+                        rs.getString("clicks_by_os")
+                )
+        );
+
+        return result.stream().findFirst();
     }
 
     private String createOrderByClause(Sort sort) {

@@ -24,7 +24,13 @@ class DashboardConfig {
     }
 
     @Bean
-    DashboardFacade dashboardFacade(DashboardLinkRepository dashboardLinkRepository, ObjectMapper objectMapper) {
-        return new DashboardFacade(dashboardLinkRepository, objectMapper);
+    DashboardFacade dashboardFacade(DashboardLinkRepository dashboardLinkRepository,
+                                    DashboardLinkDetailsDtoMapper dashboardLinkDetailsDtoMapper) {
+        return new DashboardFacade(dashboardLinkRepository, dashboardLinkDetailsDtoMapper);
+    }
+
+    @Bean
+    DashboardLinkDetailsDtoMapper dashboardLinkDetailsDtoMapper(ObjectMapper objectMapper) {
+        return new DashboardLinkDetailsDtoMapper(objectMapper);
     }
 }

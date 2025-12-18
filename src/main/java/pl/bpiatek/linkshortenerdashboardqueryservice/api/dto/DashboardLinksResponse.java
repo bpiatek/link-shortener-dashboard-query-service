@@ -2,7 +2,7 @@ package pl.bpiatek.linkshortenerdashboardqueryservice.api.dto;
 
 import java.time.Instant;
 
-public record DashboardLinkDto(
+public record DashboardLinksResponse(
         Long id,
         String linkId,
         String userId,

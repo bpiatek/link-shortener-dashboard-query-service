@@ -1,36 +1,34 @@
 package pl.bpiatek.linkshortenerdashboardqueryservice.domain;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import pl.bpiatek.linkshortenerdashboardqueryservice.api.dto.DashboardLinkDto;
+import pl.bpiatek.linkshortenerdashboardqueryservice.api.dto.DashboardLinkDetailsResponse;
+import pl.bpiatek.linkshortenerdashboardqueryservice.api.dto.DashboardLinksResponse;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.Optional;
 
 public class DashboardFacade {
 
-    private final Logger logger = LoggerFactory.getLogger(DashboardFacade.class);
+    private final Logger log = LoggerFactory.getLogger(DashboardFacade.class);
 
     private final DashboardLinkRepository dashboardLinkRepository;
-    private final ObjectMapper objectMapper;
+    private final DashboardLinkDetailsDtoMapper dashboardLinkDetailsDtoMapper;
 
-    DashboardFacade(DashboardLinkRepository dashboardLinkRepository, ObjectMapper objectMapper) {
+    DashboardFacade(DashboardLinkRepository dashboardLinkRepository,
+                    DashboardLinkDetailsDtoMapper dashboardLinkDetailsDtoMapper) {
         this.dashboardLinkRepository = dashboardLinkRepository;
-        this.objectMapper = objectMapper;
+        this.dashboardLinkDetailsDtoMapper = dashboardLinkDetailsDtoMapper;
     }
 
-    public Page<DashboardLinkDto> getUserLinks(String userId, Pageable pageable) {
+    public Page<DashboardLinksResponse> getUserLinks(String userId, Pageable pageable) {
         return dashboardLinkRepository.findByUserId(userId, pageable)
                 .map(this::toDto);
     }
 
-    private DashboardLinkDto toDto(DashboardLink entity) {
-        return new DashboardLinkDto(
+    private DashboardLinksResponse toDto(DashboardLink entity) {
+        return new DashboardLinksResponse(
                 entity.id(),
                 entity.linkId(),
                 entity.userId(),
@@ -44,15 +42,8 @@ public class DashboardFacade {
         );
     }
 
-    private Map<String, Integer> parseJsonbToMap(String json) {
-        if (json == null || json.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        try {
-            return objectMapper.readValue(json, new TypeReference<>() {});
-        } catch (JsonProcessingException e) {
-            logger.error("Failed to parse JSONB: {}", json, e);
-            return Collections.emptyMap();
-        }
+    public Optional<DashboardLinkDetailsResponse> getLink(String userId, String linkId) {
+        return dashboardLinkRepository.getByLinkIdAndUser(userId, linkId)
+                .map(dashboardLinkDetailsDtoMapper::toResponse);
     }
 }

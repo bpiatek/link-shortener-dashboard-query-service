@@ -4,12 +4,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import pl.bpiatek.linkshortenerdashboardqueryservice.api.dto.DashboardLinkDto;
 
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 

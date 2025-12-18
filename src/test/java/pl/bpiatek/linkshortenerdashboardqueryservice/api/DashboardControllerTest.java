@@ -1,12 +1,9 @@
 package pl.bpiatek.linkshortenerdashboardqueryservice.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -14,11 +11,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import pl.bpiatek.linkshortenerdashboardqueryservice.api.dto.DashboardLinkDto;
+import pl.bpiatek.linkshortenerdashboardqueryservice.api.dto.DashboardLinksResponse;
 import pl.bpiatek.linkshortenerdashboardqueryservice.config.TestClockConfiguration;
 import pl.bpiatek.linkshortenerdashboardqueryservice.config.TestSecurityConfiguration;
 import pl.bpiatek.linkshortenerdashboardqueryservice.domain.DashboardFacade;
@@ -70,8 +66,8 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.totalPages").value(1));
     }
 
-    private DashboardLinkDto aDashboardLinkDto() {
-        return new DashboardLinkDto(
+    private DashboardLinksResponse aDashboardLinkDto() {
+        return new DashboardLinksResponse(
                 1L,
                 "link-id",
                 "user-id",
