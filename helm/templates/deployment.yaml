@@ -46,9 +46,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            { { - if .Values.env } }
-            { { - toYaml .Values.env | nindent 12 } }
-            { { - end } }
+            {{- if .Values.env }}
+            {{- toYaml .Values.env | nindent 12 }}
+            {{- end }}
           startupProbe:
             httpGet:
               path: /actuator/health/liveness
