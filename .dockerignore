@@ -1,12 +1,9 @@
 settings.xml
-
-target/
-
 .idea/
 *.iml
 .env
-.git
-.gitignore
-README.md
-Dockerfile
-.mvn/wrapper/maven-wrapper.jar
+
+target/*
+
+!target/extracted
+!target/extracted/**
